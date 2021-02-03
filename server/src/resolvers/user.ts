@@ -11,6 +11,7 @@ import {
   Query,
 } from "type-graphql";
 import argon2 from "argon2";
+import { COOKIE_NAME } from "../constants";
 
 @InputType()
 class UsernamePasswordInput {
@@ -53,7 +54,7 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em ,req}: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length < 2) {
       return {
@@ -66,7 +67,7 @@ export class UserResolver {
       };
     }
 
-    if (options.username.length < 2) {
+    if (options.password.length < 2) {
       return {
         errors: [
           {
@@ -134,9 +135,24 @@ export class UserResolver {
     }
 
     req.session.userId = user.id;
-    
+
     return {
       user,
     };
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req,res }: MyContext) {
+    return new Promise((resolve) =>
+      req.session.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        if (err) {
+          resolve(false);
+          return;
+        }
+
+        resolve(true);
+      })
+    );
   }
 }
