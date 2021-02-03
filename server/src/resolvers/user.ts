@@ -11,19 +11,8 @@ import {
 } from "type-graphql";
 import argon2 from "argon2";
 import { COOKIE_NAME } from "../constants";
-<<<<<<< HEAD
 import { UsernamePasswordInput } from "../utils/UsernamePasswordInput";
 import { validateRegiser } from "../utils/validateRegister";
-=======
-
-@InputType()
-class UsernamePasswordInput {
-  @Field()
-  username: string;
-  @Field()
-  password: string;
-}
->>>>>>> 8_update-cache
 
 @ObjectType()
 class FieldError {
@@ -66,32 +55,9 @@ export class UserResolver {
     @Arg("options") options: UsernamePasswordInput,
     @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
-<<<<<<< HEAD
     const errors = validateRegiser(options);
     if (errors) {
       return { errors };
-=======
-    if (options.username.length < 2) {
-      return {
-        errors: [
-          {
-            field: "username",
-            message: "length must be greater than 2",
-          },
-        ],
-      };
-    }
-
-    if (options.password.length < 2) {
-      return {
-        errors: [
-          {
-            field: "password",
-            message: "length must be greater than 2",
-          },
-        ],
-      };
->>>>>>> 8_update-cache
     }
 
     const hashedPassword = await argon2.hash(options.password);
@@ -165,19 +131,12 @@ export class UserResolver {
   }
 
   @Mutation(() => Boolean)
-<<<<<<< HEAD
   logout(@Ctx() { req, res }: MyContext) {
-=======
-  logout(@Ctx() { req,res }: MyContext) {
->>>>>>> 8_update-cache
     return new Promise((resolve) =>
       req.session.destroy((err) => {
         res.clearCookie(COOKIE_NAME);
         if (err) {
-<<<<<<< HEAD
           console.log(err);
-=======
->>>>>>> 8_update-cache
           resolve(false);
           return;
         }
