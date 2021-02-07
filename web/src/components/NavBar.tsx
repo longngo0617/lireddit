@@ -10,10 +10,8 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
   const [{ data, fetching }] = useMeQuery({
     pause: isServer(),
   });
+
   let body = null;
-
-  
-
   //data is loading
   if (fetching) {
     body = null;
