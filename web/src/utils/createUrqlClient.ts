@@ -1,22 +1,23 @@
+import { Cache, cacheExchange, Resolver } from "@urql/exchange-graphcache";
 import gql from "graphql-tag";
-import { VoteMutationVariables } from "./../generated/graphql";
+import Router from "next/router";
 import {
   dedupExchange,
   Exchange,
   fetchExchange,
-  stringifyVariables,
+  stringifyVariables
 } from "urql";
-import { cacheExchange, Resolver, Cache } from "@urql/exchange-graphcache";
-import {
-  LogoutMutation,
-  MeQuery,
-  MeDocument,
-  LoginMutation,
-  RegisterMutation,
-} from "../generated/graphql";
-import { betterUpdateQuery } from "./betterUpdateQuery";
 import { pipe, tap } from "wonka";
-import Router from "next/router";
+import {
+  LoginMutation, LogoutMutation,
+  MeDocument, MeQuery,
+  RegisterMutation
+} from "../generated/graphql";
+import {
+  DeletePostMutationVariables,
+  VoteMutationVariables
+} from "./../generated/graphql";
+import { betterUpdateQuery } from "./betterUpdateQuery";
 import { isServer } from "./isServer";
 
 const errorExchange: Exchange = ({ forward }) => (ops$) => {
@@ -63,57 +64,6 @@ const cursorPagination = (): Resolver => {
       hasMore,
       posts: results,
     };
-    // const visited = new Set();
-    // let result: NullArray<string> = [];
-    // let prevOffset: number | null = null;
-
-    // for (let i = 0; i < size; i++) {
-    //   const { fieldKey, arguments: args } = fieldInfos[i];
-    //   if (args === null || !compareArgs(fieldArgs, args)) {
-    //     continue;
-    //   }
-
-    //   const links = cache.resolve(entityKey, fieldKey) as string[];
-    //   const currentOffset = args[offsetArgument];
-
-    //   if (
-    //     links === null ||
-    //     links.length === 0 ||
-    //     typeof currentOffset !== "number"
-    //   ) {
-    //     continue;
-    //   }
-
-    //   const tempResult: NullArray<string> = [];
-
-    //   for (let j = 0; j < links.length; j++) {
-    //     const link = links[j];
-    //     if (visited.has(link)) continue;
-    //     tempResult.push(link);
-    //     visited.add(link);
-    //   }
-
-    //   if (
-    //     (!prevOffset || currentOffset > prevOffset) ===
-    //     (mergeMode === "after")
-    //   ) {
-    //     result = [...result, ...tempResult];
-    //   } else {
-    //     result = [...tempResult, ...result];
-    //   }
-
-    //   prevOffset = currentOffset;
-    // }
-
-    // const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
-    // if (hasCurrentPage) {
-    //   return result;
-    // } else if (!(info as any).store.schema) {
-    //   return undefined;
-    // } else {
-    //   info.partial = true;
-    //   return result;
-    // }
   };
 };
 
@@ -153,6 +103,12 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
         },
         updates: {
           Mutation: {
+            deletePost: (_result, args, cache, info) => {
+              cache.invalidate({
+                __typename: "Post",
+                id: (args as DeletePostMutationVariables).id,
+              });
+            },
             vote: (_result, args, cache, info) => {
               const { postId, value } = args as VoteMutationVariables;
               const data = cache.readFragment(
@@ -165,7 +121,6 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                 `,
                 { id: postId } as any
               );
-              console.log("data:", data);
               if (data) {
                 if (data.voteStatus === value) {
                   return;
@@ -210,6 +165,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              invalidateAllPosts(cache)
             },
 
             register: (_result, args, cache, info) => {
